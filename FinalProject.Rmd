@@ -97,12 +97,18 @@ mod1 <- lm(Price ~ Beds + Baths + sq.ft + Floor + City + Units + Balcony + Walk_
 
 summary(mod1)
 
-# Model 2 Performance
+# Model 1 Performance
 preds_train <- predict(mod1, newdata = apartments_train)
 preds_test <- predict(mod1, newdata = apartments_test)
 
 RMSE(preds_train, apartments_train$Price)
 RMSE(preds_test, apartments_test$Price)
+
+# Model 1: Plotting Predicted Price vs Actual
+results_test <- apartments_test %>% mutate(Price_pred = preds_test)
+
+ggplot(results_test, aes(x = Price, y = Price_pred)) + geom_point() + 
+  labs(x = "Actual Price", y = "Predicted Price", title = "Predicted vs Actual Price")
 
 ```
 
@@ -126,5 +132,11 @@ preds_test <- predict(mod2, newdata = apartments_test)
 
 RMSE(preds_train, apartments_train$Price)
 RMSE(preds_test, apartments_test$Price)
+
+# Model 2: Plotting Predicted Price vs Actual
+results_test <- apartments_test %>% mutate(Price_pred = preds_test)
+
+ggplot(results_test, aes(x = Price, y = Price_pred)) + geom_point() + 
+  labs(x = "Actual Price", y = "Predicted Price", title = "Predicted vs Actual Price")
 
 ```
