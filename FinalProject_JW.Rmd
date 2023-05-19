@@ -1,0 +1,193 @@
+---
+title: "MGSC 310 Final Project"
+author: "Luis Rivas, Joseph Calise, Jasper Wu, BJ Bae"
+subtitle: MGSC 310 Final Project
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+
+
+library(knitr)
+
+# As long as you are working in a Rstudio Project file, you shouldn't need to 'hard code' directories like this 
+# change to your own working directory
+#knitr::opts_knit$set(root.dir = 'C:/Users/doosti/Desktop/MGSC_310')
+#knitr::opts_knit$set(root.dir = '/Users/luisrivas/Documents/CPSC_Courses/MGSC_310/')
+knitr::opts_knit$set(root.dir = '/Users/jasperwu/Chapman/Spring2023/MGSC310/MGSC_310/problem_sets')
+
+# set seed to your own favorite number
+set.seed(310)
+options(width=70)
+# if you want to prevent scientific format for numbers use this:
+options(scipen=99)
+
+# general rchunk code options
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=FALSE, size = "vsmall")
+opts_chunk$set(message = FALSE,
+               warning = FALSE,
+               cache = TRUE,
+               autodep = TRUE,
+               cache.comments = FALSE,
+               collapse = TRUE,
+               fig.width = 5,  
+               fig.height = 4,
+               fig.align='center')
+
+```
+
+```{r setup_2}
+
+# load all your libraries here
+library('tidyverse')
+library('dplyr')
+library('rsample')
+library('ggridges')
+library('ggplot2')
+library('tree')
+library('caret')
+library('randomForest')
+library('caret')
+library('randomForestExplainer')
+library(ggcorrplot)
+# note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
+
+```
+
+
+## Exploring our dataset. 
+
+```{r}
+
+# code for data exploration 
+apartments <- read_csv("../datasets/Equity_Apartments_Data.csv")
+dim(apartments)
+#str(apartments)
+apartments <- apartments %>% select(Price, Beds, Baths, City, sq.ft, Floor, Units, Balcony, Walk_In_Closet, Fireplace, City_Skyline, Kitchen_Island, Stainless_Appliances,  Office_Space , Renovated) 
+#%>% filter (Price <= 8000)
+#Days_Till_Available, Estiamted_Vacancy) 
+#%>% filter(Estiamted_Vacancy <0.4) 
+apartments <- na.omit(apartments)
+dim(apartments)
+
+print(glimpse(apartments))
+
+
+```
+
+
+## Correlation plots
+
+Evalaue the correlations among the continuous variables
+```{r}
+
+# correlation matrix
+cor.table <- cor(apartments %>% select_if(is.numeric))
+print(cor.table)
+ggcorrplot(cor.table)
+
+```
+
+
+## Summary of data
+
+ 
+
+```{r}
+
+# print(summary(apartments))
+table(apartments$City)
+
+city_avg_bed2ormore <-
+  apartments %>% filter(Beds>=2) %>% 
+  group_by(City) %>%
+  summarize(
+    price_avg_city = mean (Price), na.rm = TRUE,
+    num_apartment = n())
+city_avg_bed2ormore %>% arrange(-price_avg_city)
+
+city_avg_bed1 <-
+  apartments %>% filter(Beds==1) %>% 
+  group_by(City) %>%
+  summarize(
+    price_avg_city = mean (Price), na.rm = TRUE,
+    num_apartment = n())
+city_avg_bed1 %>% arrange(-price_avg_city)
+
+```
+## An interesting graph. 
+
+It will be interesting to see how many different variables can be used to predict the rent price of apartments. 
+
+```{r}
+
+# Visualizing prices
+print(ggplot(apartments, aes(x = Price)) + geom_histogram(bins = 50) + labs(title="Histogram of Rent Prices in America", x = "Rent Price", y = "Frequency") + theme_minimal()) 
+
+print(ggplot(apartments, aes(x= City , y= Price)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4))
+
+```
+
+
+## Model 1: Linear Regression
+
+```{r}
+
+# Model 1: Linear Regression
+set.seed(310)
+apartments_split <- initial_split(apartments, prop=0.8)
+apartments_train <- training(apartments_split)
+apartments_test <- testing(apartments_split)
+
+mod1 <- lm(Price ~ Beds + Baths + sq.ft + Floor + City + Units + Balcony + Walk_In_Closet + Fireplace + City_Skyline + Kitchen_Island + Stainless_Appliances + Renovated + Office_Space, data=apartments_train)
+
+summary(mod1)
+
+# Model 1 Performance
+preds_train <- predict(mod1, newdata = apartments_train)
+preds_test <- predict(mod1, newdata = apartments_test)
+
+RMSE(preds_train, apartments_train$Price)
+RMSE(preds_test, apartments_test$Price)
+
+# Model 1: Plotting Predicted Price vs Actual
+results_test <- apartments_test %>% mutate(Price_pred = preds_test)
+
+ggplot(results_test, aes(x = Price, y = Price_pred)) + geom_point() + 
+  labs(x = "Actual Price", y = "Predicted Price", title = "Predicted vs Actual Price")
+
+```
+
+
+## Model 2: Random Forest
+
+```{r}
+
+# Model 2: Random Forest
+mod2 <- randomForest(Price ~ Beds + Baths + sq.ft + Floor + City + Units + Balcony + Walk_In_Closet + Fireplace + City_Skyline + Kitchen_Island + Stainless_Appliances + Renovated + Office_Space,
+                           data = apartments_train, 
+                           ntree = 200,
+                           mtry = 8, 
+                           importance = TRUE)
+
+summary(mod2)
+
+# Model 2 Performance
+preds_train <- predict(mod2, newdata = apartments_train)
+preds_test <- predict(mod2, newdata = apartments_test)
+
+RMSE(preds_train, apartments_train$Price)
+RMSE(preds_test, apartments_test$Price)
+
+# Model 2: Plotting Predicted Price vs Actual
+results_test <- apartments_test %>% mutate(Price_pred = preds_test)
+
+ggplot(results_test, aes(x = Price, y = Price_pred)) + geom_point() + 
+  labs(x = "Actual Price", y = "Predicted Price", title = "Predicted vs Actual Price")
+
+```
