@@ -175,3 +175,39 @@ ggplot(results_test, aes(x = Price, y = Price_pred)) + geom_point() +
   labs(x = "Actual Price", y = "Predicted Price", title = "Predicted vs Actual Price")
 
 ```
+
+
+## Model Evaluation
+
+### Model 2 Eval
+
+```{r}
+
+plot(mod2)
+
+```
+
+```{r}
+
+importance(mod2)
+varImpPlot(mod2)
+
+```
+
+```{r}
+
+plot_min_depth_distribution(mod2)
+
+```
+
+```{r}
+
+plot_predict_interaction(mod2)
+
+```
+
+```{r}
+
+plot_multi_way_importance(mod2)
+
+```
