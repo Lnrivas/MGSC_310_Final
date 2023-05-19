@@ -18,6 +18,7 @@ library(knitr)
 #knitr::opts_knit$set(root.dir = 'C:/Users/doosti/Desktop/MGSC_310')
 #knitr::opts_knit$set(root.dir = '/Users/luisrivas/Documents/CPSC_Courses/MGSC_310/')
 #knitr::opts_knit$set(root.dir = '/Users/jasperwu/Chapman/Spring2023/MGSC310/MGSC_310/problem_sets')
+#knitr::opts_knit$set(root.dir = '/Users/01bbae/Desktop/code/MGSC310/')
 
 # set seed to your own favorite number
 set.seed(310)
@@ -63,7 +64,7 @@ library('ggcorrplot')
 ```{r}
 
 # code for data exploration 
-apartments <- read_csv("../datasets/Equity_Apartments_Data.csv")
+apartments <- read_csv("./datasets/Equity_Apartments_Data.csv")
 dim(apartments)
 apartments <- apartments %>% select(Price, Beds, Baths, City, sq.ft, Floor, Units, Balcony, Walk_In_Closet, Fireplace, City_Skyline, Kitchen_Island, Stainless_Appliances, Office_Space, Renovated) 
 apartments <- na.omit(apartments)
@@ -200,11 +201,6 @@ plot_min_depth_distribution(mod2)
 
 ```
 
-```{r}
-
-plot_predict_interaction(mod2)
-
-```
 
 ```{r}
 
